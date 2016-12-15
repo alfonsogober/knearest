@@ -10,7 +10,7 @@ npm install knearest
 
 ```Javascript
 
-const Machine = require('./knearest');
+const Machine = require('knearest');
 
 // Conversion function to output your numerical classifiers as text.
 // This can be whatever you want it to be, as long as it's internally consistent.
@@ -85,7 +85,7 @@ Create an instance using `options` object.
   props: <Array> // The features to be used in the algorithm. These must correspond to your dataset.
   nodes: <Array> // The dataset to train with. These must have a consistent structure.
 }
-``` 
+```
 
 #### `Machine.guess(<String> type, <Object> data)`
 Guess the value of `type` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
