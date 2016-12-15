@@ -10,7 +10,7 @@ npm install knearest
 
 ```Javascript
 
-const Machine = require('./knearest');
+const Machine = require('knearest');
 
 // Conversion function to output your numerical classifiers as text.
 // This can be whatever you want it to be, as long as it's internally consistent.
