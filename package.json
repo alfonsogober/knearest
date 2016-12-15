@@ -1,0 +1,31 @@
+{
+  "name": "knearest",
+  "version": "1.0.0",
+  "description": "A Javascript implementation of the \"k-Nearest-Neighbor\" machine-learning algorithm",
+  "main": "knearest.js",
+  "dependencies": {
+    "uuid": "^3.0.1",
+    "bluebird": "^3.4.6",
+    "lodash": "^4.17.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ml",
+    "machine",
+    "learning",
+    "machine",
+    "learning",
+    "artificial",
+    "intelligence",
+    "k-nearest",
+    "nearest",
+    "algorithm",
+    "alfonso",
+    "gober"
+  ],
+  "author": "Alfonso Gober <alfonso.gober.jr@gmail.com>",
+  "license": "MIT"
+}
