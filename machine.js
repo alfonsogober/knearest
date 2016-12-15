@@ -1,3 +1,6 @@
+/*jslint node: true */
+/*jslint esversion: 6 */
+
 const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
@@ -12,7 +15,6 @@ class Machine extends EventEmitter {
     if (options && options.props) this.setProps(options.props);
     if (options && options.nodes) _.forEach(options.nodes, (node) => this.nodes.push(new MachineNode(this, { features: node })));
     this.k = options && options.k ? options.k : 1;
-    console.log('K-Nearest Machine is online');
   }
 
   setProps(props) {
@@ -28,6 +30,7 @@ class Machine extends EventEmitter {
 
   addNode(node) {
     this.nodes.push(node);
+    this.emit('node', { id: node.id, features: node.features });
   }
 
   calculateRanges() {
@@ -40,6 +43,7 @@ class Machine extends EventEmitter {
     })
       .then(() => {
         _.forEach(this.props, (prop) => this.features[prop].range = this.features[prop].max - this.features[prop].min);
+        this.emit('ranges', this.features);
       });
   }
 
@@ -50,12 +54,14 @@ class Machine extends EventEmitter {
           let neighbor = new MachineNode(this, _node);
           let features = [];
           _.forEach(this.props, (prop) => {
-            if (node.get(prop)) {
+            if ((typeof node.get(prop) === 'number') && (typeof _node.get(prop) === 'number') && (this.features[prop].range !== 0)) {
               neighbor.deltas[prop] = (neighbor.get(prop) - node.get(prop)) / this.features[prop].range;
-              features.push(Math.sqrt(neighbor.deltas[prop] * neighbor.deltas[prop]));
+              let feature = Math.sqrt(neighbor.deltas[prop] * neighbor.deltas[prop]);
+              features.push(feature);
             }
           });
-          neighbor.distance = features.reduce((x, y) => x + y);
+          neighbor.distance = features.length > 1 ? features.reduce((x, y) => x + y) : features[0];
+          this.emit('distance', { parent: node.id, child: _node.id, distance: neighbor.distance });
           return Bluebird.resolve(neighbor);
         }
       })
@@ -68,19 +74,22 @@ class Machine extends EventEmitter {
   }
 
   guess(prop, obj) {
+    this.emit('guessing', { feature: prop, k: this.k });
     let start = Date.now();
     let node = new MachineNode(this, { features: obj });
     this.addNode(node);
     return this.calculateRanges()
       .then(this.calculateDistances.bind(this))
       .then(() => {
-        return node.guess(prop, this.k)
+        return node.guess(prop, this.k);
       })
       .then((guess) => {
         let end = Date.now();
         let duration = end - start;
-        console.log('Done in '+duration+'ms');
-        return guess;
+        let result = { elapsed: duration, feature: prop, value: guess };
+        this.emit('guess', result);
+        node.set(prop, guess);
+        return result;
       });
   }
 

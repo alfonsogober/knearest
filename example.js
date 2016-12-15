@@ -1,15 +1,5 @@
-# K-Nearest
-
-A Javascript implementation of the k-Nearest-Neighbor machine-learning algorithm.
-
-## How To Use
-
-```
-npm install knearest
-```
-
-```Javascript
-
+/*jslint node: true */
+/*jslint esversion: 6 */
 const Machine = require('./knearest');
 
 // Conversion function to output your numerical classifiers as text.
@@ -67,37 +57,3 @@ machine.guess('type', unknown)
   .then((result) => {
     console.log('Value of "' + result.feature + '" is probably "' + convert(result.value) + '" ('+result.elapsed+'ms)');
   });
-
-```
-
-## Docs
-
-### Methods
-
-#### `new Machine(<Object> options)`
-Create an instance using `options` object.
-
-`options` expects the following structure:
-
-```Javascript
-{
-  k: <Number> // The value of k, i.e. how many nearest neighbors to guess with.
-  props: <Array> // The features to be used in the algorithm. These must correspond to your dataset.
-  nodes: <Array> // The dataset to train with. These must have a consistent structure.
-}
-``` 
-
-#### `Machine.guess(<String> type, <Object> data)`
-Guess the value of `type` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
-
-### Events
-
-`'node'`: Fired when a node is added to the dataset. Data structure: `{ id: <String>, features: <Object> }`.  
-
-`'guessing'`: Fired immediately when .guess() is called. Data structure: `{ feature: <String>, k: <Number> }`.  
-
-`'guess'`: Fired when a guess is complete. Data structure: `{ elapsed: <Number>, feature: <String>, value: <Number> }`.
-
-`'ranges'`: Fired when new ranges are calculated. Data structure: `{ <String>: { min: <Number>, max: <Number>, range: <Number> }, ...}`.  
-
-`'distance'`: Fired when a new distance is calculated on a node. Data structure: `{ parent: <String>, child: <String>, distance: <Number> }`.

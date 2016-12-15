@@ -1,3 +1,6 @@
+/*jslint node: true */
+/*jslint esversion: 6 */
+
 const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
@@ -38,7 +41,6 @@ class MachineNode extends EventEmitter {
   }
 
   guess(prop, k) {
-    console.log('guessing "'+prop+'"... ');
     return new Bluebird((resolve, reject) => {
       let count = {};
       let neighbors = this.neighbors.slice(0, k);
