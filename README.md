@@ -87,8 +87,8 @@ Create an instance using `options` object.
 }
 ```
 
-#### `Machine.guess(<String> type, <Object> data)`
-Guess the value of `type` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
+#### `Machine.guess(<String> prop, <Object> data)`
+Guess the value of `prop` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
 
 ### Events
 
