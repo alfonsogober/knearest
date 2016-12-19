@@ -1,6 +1,7 @@
 'use strict';
 
 const Bluebird = require('bluebird');
+const natural = require('natural');
 const _ = require('lodash');
 const Node = require('../node');
 
@@ -105,6 +106,7 @@ module.exports = (machine) => {
                     features.push(feature);
                   }
                   else if ((typeof node.features[prop] === 'string') && (typeof _node.features[prop] === 'string') && (this.features[prop].range !== 0)) {
+                    let delta;
                     if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[prop], _node.features[prop]);
                     else if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[prop], _node.features[prop]);
                     else if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[prop], _node.features[prop]);

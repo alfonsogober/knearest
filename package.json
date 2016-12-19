@@ -1,6 +1,6 @@
 {
   "name": "knearest",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A Javascript implementation of the \"k-Nearest-Neighbor\" machine-learning algorithm",
   "main": "knearest.js",
   "dependencies": {
@@ -10,12 +10,11 @@
     "mongodb": "^2.2.16",
     "mongodb-bluebird": "^0.1.1",
     "natural": "^0.4.0",
-    "orequire": "^1.0.7",
     "uuid": "^3.0.1"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./examples/memory-example.js"
   },
   "keywords": [
     "ml",

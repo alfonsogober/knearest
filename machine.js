@@ -7,8 +7,11 @@ const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
 const _ = require('lodash');
-const orequire = require('orequire');
-const Adapters = orequire('./adapters');
+
+const adapters = {
+  memory: require('./adapters/memory'),
+  mongo: require('./adapters/mongo')
+};
 
 class Machine extends EventEmitter {
 
@@ -16,12 +19,13 @@ class Machine extends EventEmitter {
     super();
     if (options && options.nodes && options.props) {
       this.setProps(options.props);
+      this.name = options.name ? options.name : '';
       this.k = options && options.k ? options.k : 1;
       this.verbose = options.verbose ? options.verbose : false;
       this.stringAlgorithm = options.stringAlgorithm ? options.stringAlgorithm : 'Jaro-Winkler';
+      if (options.name) this.name = options.name;
       if (!options.data || (options.data.store === 'memory')) {
-        const adapter = Adapters['memory'];
-        adapter(this)
+        adapters['memory'](this)
           .then(() => {
             return Bluebird.map(options.nodes, (node) => this.setNode(node))
           })
@@ -29,9 +33,8 @@ class Machine extends EventEmitter {
           return this;
       }
       else if (options.data && options.data.store === 'mongo' && options.data.url) {
-        const adapter = Adapters['mongo'];
         this.data = options.data;
-        adapter(this)
+        adapters['mongo'](this)
           .then(() => {
             return Bluebird.map(options.nodes, (node) => this.setNode(node));
           })

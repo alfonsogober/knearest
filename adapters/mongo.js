@@ -13,8 +13,8 @@ module.exports = (machine) => {
 
       machine.db = db;
 
-      let nodes = machine.db.collection('nodes');
-      let arcs = machine.db.collection('arcs');
+      let nodes = machine.db.collection(`${this.name}Nodes`);
+      let arcs = machine.db.collection(`${this.name}Arcs`);
 
       machine.getNodes = function () {
         return new Bluebird((resolve, reject) => {

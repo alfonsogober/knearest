@@ -12,7 +12,7 @@ npm install knearest
 
 In this example, consider the following:
 
-* You have real estate data stored in mongodb,
+* You have real estate data you'd like stored in mongodb.
 * Your data consists of stats for rooms, area (in square meters), and type.
 * You have a new data point, but you don't know whether it's a house, apartment, or flat.
 * You'd like to use a Node.js script to guess the type based on your existing dataset.
@@ -27,6 +27,7 @@ const chalk = require('chalk');
 // Some data to get us going. It's important that your data is well-clustered,
 // because statistical noise will render this algorithm less useful.
 let machine= new Machine({
+  name: 'example',                                    // Optional. Defaults to ''
   k: 5,                                               // Optional. Defaults to 1.
   props: ['rooms', 'area', 'type'],                   // Required. This is the schema of your dataset. All nodes will be checked against this.
   nodes: [                                            // Required. There must be some data to seed the AI's knowledge
@@ -62,16 +63,14 @@ let machine= new Machine({
   stringAlgorithm: 'Levenshtein'                      // Optional. Defaults to 'Jaro-Winkler'
 });
 
-// Let's add a new data point, this time without a "type".
-// We want to guess the value of "type".
-var unknown = {rooms: 12, area: 1375 };
-
 // knearest is also an EventEmitter.
 // The below line will print to terminal each time a node is added.
 machine.on('node', console.log);
 
+// Let's add a new data point, this time without a "type".
+// We want to guess the value of "type".
 // .guess(property, node) returns a bluebird Promise.
-machine.guess('type', unknown)
+machine.guess('type', {rooms: 12, area: 1375 })
   .then((result) = {
     console.log('Value of "' + result.feature + '" is probably ' + chalk.green(result.value) + ' ('+result.elapsed+'ms)');
     process.exit(0);
@@ -81,36 +80,88 @@ machine.guess('type', unknown)
 
 ## Docs
 
-### Methods
+### Options
 
-#### `new Machine(Object options)`
-Create an instance using `options` object.
+#### `props`
+**Type:** `Array`
+**Required:** Yes
+**Description:** The features to be used in the algorithm. These must correspond to your dataset. Similar to a schema.
 
-`options` expects the following structure:
+#### `nodes`
+**Type:** `Array`
+**Required:** Yes
+**Description:** The dataset to train with. These must have a consistent structure matching the schema in `props`.
 
+#### `name`
+**Type:** `String`
+**Required:** No
+**Default:** `''`
+**Description:** The namespace for your data. Will be added as a prefix to your DB table names.
+
+#### `k`
+**Type:** `Number`
+**Required:** No
+**Default:** `1`
+**Description:** The value of k, i.e. how many nearest neighbors to guess with.
+
+#### `data`
+**Type:** `Object`
+**Required:** No
+**Default:** `{ store: 'memory' }`
+**Description:** A data configuration object for use with data adapters. Defaults to 'memory'.  
+If you want to use a data adapter, specify it here.
+
+* The [MongoDB](/adapters/mongo.js) adapter accepts an object like this:
 ```Javascript
 {
-  k: Number // Optional. The value of k, i.e. how many nearest neighbors to guess with.
-  props: Array // Required. The features to be used in the algorithm. These must correspond to your dataset.
-  nodes: Array // Required. The dataset to train with. These must have a consistent structure.
-  data: Object // Optional. A data configuration object for use with data adapters. Defaults to 'memory', which is not for production use.
-  verbose: Boolean, // Optional. Toggle console output. Defaults to false
-  stringAlgorithm: String // Optional. The [String Distance Algorithm](http://www.joyofdata.de/blog/comparison-of-string-distance-algorithms/) to use for calculating string similarity. defaults to 'Jaro-Winkler'
+  store: 'mongo',                                   
+  url: 'mongodb://localhost:27017/knearest'         // Required if store = 'mongo'
 }
 ```
 
-#### `Machine.guess(String prop, Object data)`
+#### `verbose`
+**Type:** `Boolean`
+**Required:** No
+**Default:** `false`
+**Description:** Toggle console output. Defaults to false
+
+#### `stringAlgorithm`
+**Type:** `Boolean`
+**Required:** No
+**Default:** `'Jaro-Winkler'`
+**Description:** The [String Distance Algorithm](http://www.joyofdata.de/blog/comparison-of-string-distance-algorithms/) to use for calculating string similarity.
+
+### Methods
+
+#### `new Machine([Object options])`
+Create an instance using `options` object.
+
+#### `Machine.guess([String prop], [Object data])`
 Guess the value of `prop` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
 
 ### Events
 
-`'node'`: Fired when a node is added to the dataset. Data structure: `{ id: String, features: Object }`.  
+`knearest` is an Event Emitter, so you can use the standard `.on(event, callback)` method to listen for emitted data.
 
-`'guessing'`: Fired immediately when .guess() is called. Data structure: `{ feature: String, k: Number }`.  
+```Javascript
+Machine.on('ready', () => )
+```
+Fired when the library has ingested all data and is ready to guess new stuff.
 
-`'guess'`: Fired when a guess is complete. Data structure: `{ elapsed: Number, feature: String, value: Number }`.
+```Javascript
+Machine.on('node', ({ id: String, features: Object }) => )
+```
+Fired when a node is added to the dataset.  
 
-`'ranges'`: Fired when new ranges are calculated. Data structure: `{ String: { min: Number, max: Number, range: Number }, ...}`.  
+```Javascript
+Machine.on('guessing', ({ feature: String, k: Number }) => )
+```
+Fired immediately when .guess() is called.  
+
+```Javascript
+Machine.on('guess', ({ elapsed: Number, feature: String, value: Number }) => )
+```
+Fired when a guess is complete.
 
 ### Adapters
 
@@ -136,7 +187,7 @@ We are accepting pull requests for the following adapters:
 * RethinkDB
 * MySQL
 
-Any suggestions or erros should be raised as an Issue on this repository.
+Any suggestions or errors should be raised as an Issue on this repository.
 
 ## Author
 
