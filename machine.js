@@ -1,23 +1,52 @@
+'use strict';
 /*jslint node: true */
 /*jslint esversion: 6 */
+
 
 const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
 const _ = require('lodash');
-const MachineNode = require('./machine-node');
+const orequire = require('orequire');
+const Adapters = orequire('./adapters');
 
 class Machine extends EventEmitter {
 
   constructor(options) {
     super();
-    this.nodes = [];
-    if (options && options.props) this.setProps(options.props);
-    if (options && options.nodes) _.forEach(options.nodes, (node) => this.nodes.push(new MachineNode(this, { features: node })));
-    this.k = options && options.k ? options.k : 1;
+    if (options && options.nodes && options.props) {
+      this.setProps(options.props);
+      this.k = options && options.k ? options.k : 1;
+      this.verbose = options.verbose ? options.verbose : false;
+      this.stringAlgorithm = options.stringAlgorithm ? options.stringAlgorithm : 'Jaro-Winkler';
+      if (!options.data || (options.data.store === 'memory')) {
+        const adapter = Adapters['memory'];
+        adapter(this)
+          .then(() => {
+            return Bluebird.map(options.nodes, (node) => this.setNode(node))
+          })
+          .then(() => this.emit('ready'));
+          return this;
+      }
+      else if (options.data && options.data.store === 'mongo' && options.data.url) {
+        const adapter = Adapters['mongo'];
+        this.data = options.data;
+        adapter(this)
+          .then(() => {
+            return Bluebird.map(options.nodes, (node) => this.setNode(node));
+          })
+          .then(() => {
+            this.emit('ready')
+          });
+        return this;
+      }
+      else throw new Error(`Data source '${options.data.store}' not supported.`);
+    }
+    else throw new Error(`Improper arguments: ${JSON.stringify(options)}`);
   }
 
   setProps(props) {
+    if (this.verbose) console.log(`Setting Machine Properties: ${JSON.stringify(props)}`)
     if (typeof props[0] !== 'undefined') {
       this.props = props;
       this.features = {};
@@ -28,71 +57,54 @@ class Machine extends EventEmitter {
     else throw new Error('Props must be an array with minimum length of 1');
   }
 
-  addNode(node) {
-    this.nodes.push(node);
-    this.emit('node', { id: node.id, features: node.features });
-  }
-
-  calculateRanges() {
-    return Bluebird.map(this.nodes, (node) => {
-      _.forEach(this.props, (prop) => {
-        if (node.get(prop) < this.features[prop].min) this.features[prop].min = node.get(prop);
-        if (node.get(prop) > this.features[prop].max) this.features[prop].max = node.get(prop);
-      });
-      return Bluebird.resolve();
-    })
-      .then(() => {
-        _.forEach(this.props, (prop) => this.features[prop].range = this.features[prop].max - this.features[prop].min);
-        this.emit('ranges', this.features);
-      });
-  }
-
-  calculateDistances() {
-    return Bluebird.map(this.nodes, (node) => {
-      return Bluebird.map(this.nodes, (_node) => {
-        if (_node.id !== node.id) {
-          let neighbor = new MachineNode(this, _node);
-          let features = [];
-          _.forEach(this.props, (prop) => {
-            if ((typeof node.get(prop) === 'number') && (typeof _node.get(prop) === 'number') && (this.features[prop].range !== 0)) {
-              neighbor.deltas[prop] = (neighbor.get(prop) - node.get(prop)) / this.features[prop].range;
-              let feature = Math.sqrt(neighbor.deltas[prop] * neighbor.deltas[prop]);
-              features.push(feature);
-            }
-          });
-          neighbor.distance = features.length > 1 ? features.reduce((x, y) => x + y) : features[0];
-          this.emit('distance', { parent: node.id, child: _node.id, distance: neighbor.distance });
-          return Bluebird.resolve(neighbor);
-        }
-      })
-        .then((neighbors) => {
-          node.setNeighbors(neighbors);
-          node.sortByDistance();
-          return node;
-        });
-    });
+  log(msg) {
+    if (this.verbose) console.log(msg)
+    this.emit('data', msg);
   }
 
   guess(prop, obj) {
-    this.emit('guessing', { feature: prop, k: this.k });
-    let start = Date.now();
-    let node = new MachineNode(this, { features: obj });
-    this.addNode(node);
-    return this.calculateRanges()
-      .then(this.calculateDistances.bind(this))
-      .then(() => {
-        return node.guess(prop, this.k);
-      })
-      .then((guess) => {
-        let end = Date.now();
-        let duration = end - start;
-        let result = { elapsed: duration, feature: prop, value: guess };
-        this.emit('guess', result);
-        node.set(prop, guess);
-        return result;
+    return new Bluebird((resolve, reject) => {
+      let start = Date.now();
+      let count = {};
+      this.on('ready', () => {
+        this.emit('guessing', { feature: prop, k: this.k });
+        return this.setNode(obj)
+          .then((node) => {
+            return this.calculateRanges()
+              .then(() => this.calculateArcs())
+              .then(() => this.getNeighbors(node.id, this.k));
+          })
+          .then((neighbors) => {
+            this.log(neighbors);
+            return Bluebird.map(neighbors, (neighbor) => {
+              _.forEach(Object.keys(neighbor.features), (feature) => {
+                if (!count[feature]) count[feature] = {};
+                if (!count[feature][neighbor.features[feature]]) count[feature][neighbor.features[feature]] = 0;
+                count[feature][neighbor.features[feature]] += 1;
+              });
+            });
+          })
+          .then(() => {
+            let highest = 0;
+            let res = null;
+            Object.keys(count[prop]).forEach((val) => {
+              if (parseFloat(count[prop][val]) >= highest) {
+                highest = parseFloat(count[prop][val]);
+                res = val;
+              }
+            });
+            return res;
+          })
+          .then((guess) => {
+            let end = Date.now();
+            let duration = end - start;
+            let result = { elapsed: duration, feature: prop, value: guess };
+            this.emit('guess', result);
+            resolve(result);
+          });
       });
+    });
   }
-
 }
 
 module.exports = Machine;
