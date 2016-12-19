@@ -84,35 +84,35 @@ machine.guess('type', {rooms: 12, area: 1375 })
 ### Options
 
 #### `props`
-**Type:** `Array`
-**Required:** Yes
+**Type:** `Array`  
+**Required:** Yes  
 **Description:** The features to be used in the algorithm. These must correspond to your dataset. Similar to a schema.
 
 #### `nodes`
-**Type:** `Array`
-**Required:** Yes
+**Type:** `Array`  
+**Required:** Yes  
 **Description:** The dataset to train with. These must have a consistent structure matching the schema in `props`.
 
 #### `name`
-**Type:** `String`
-**Required:** No
-**Default:** `''`
+**Type:** `String`  
+**Required:** No  
+**Default:** `''`  
 **Description:** The namespace for your data. Will be added as a prefix to your DB table names.
 
 #### `k`
-**Type:** `Number`
-**Required:** No
-**Default:** `1`
+**Type:** `Number`  
+**Required:** No  
+**Default:** `1`  
 **Description:** The value of k, i.e. how many nearest neighbors to guess with.
 
 #### `data`
-**Type:** `Object`
-**Required:** No
-**Default:** `{ store: 'memory' }`
+**Type:** `Object`  
+**Required:** No  
+**Default:** `{ store: 'memory' }`  
 **Description:** A data configuration object for use with data adapters. Defaults to 'memory'.  
 If you want to use a data adapter, specify it here.
 
-* The [MongoDB](/adapters/mongo.js) adapter accepts an object like this:
+The [MongoDB](/adapters/mongo.js) adapter accepts an object like this:
 ```Javascript
 {
   store: 'mongo',                                   
@@ -121,16 +121,16 @@ If you want to use a data adapter, specify it here.
 ```
 
 #### `verbose`
-**Type:** `Boolean`
-**Required:** No
-**Default:** `false`
+**Type:** `Boolean`  
+**Required:** No  
+**Default:** `false`  
 **Description:** Toggle console output. Defaults to false
 
 #### `stringAlgorithm`
-**Type:** `Boolean`
-**Required:** No
-**Default:** `'Jaro-Winkler'`
-**Description:** The [String Distance Algorithm](http://www.joyofdata.de/blog/comparison-of-string-distance-algorithms/) to use for calculating string similarity.
+**Type:** `Boolean`  
+**Required:** No  
+**Default:** `'Jaro-Winkler'`  
+**Description:** The [String Distance Algorithm](http://www.joyofdata.de/blog/comparison-of-string-distance-algorithms/) to use for calculating string similarity. Accepts either `'Jaro-Winkler'`, `'Levenshtein'`, or `'Dice'`.
 
 ### Methods
 
