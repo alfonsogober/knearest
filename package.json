@@ -1,6 +1,6 @@
 {
   "name": "knearest",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A Javascript implementation of the \"k-Nearest-Neighbor\" machine-learning algorithm",
   "main": "knearest.js",
   "dependencies": {
@@ -16,6 +16,14 @@
   "scripts": {
     "test": "node ./examples/memory-example.js"
   },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/alfonsogoberjr/knearest"
+  },
+  "bugs": {
+    "url": "https://github.com/alfonsogoberjr/knearest/issues",
+    "email": "dev@merciba.com"
+  }
   "keywords": [
     "ml",
     "machine",

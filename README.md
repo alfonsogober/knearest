@@ -1,4 +1,5 @@
 # K-Nearest
+[![npm version](https://badge.fury.io/js/knearest.svg)](https://badge.fury.io/js/knearest)  
 
 A Javascript implementation of the [k-Nearest-Neighbor](https://www.youtube.com/watch?v=UqYde-LULfs) machine-learning algorithm.
 
