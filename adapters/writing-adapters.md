@@ -14,23 +14,26 @@ const _ = require('lodash');
 
 module.exports = (machine) => {
   return new Bluebird((success, failure) => {
-      // Connect to DB, establish '{this.name}neighbors' and '{this.name}_arcs' table/collection names
 
       machine.getNodes = function () {
-        // Get the full list of nodes from the '{this.name}neighbors' collection or table
+        // Get the full list of nodes from the 'nodes' collection or table
         // Return a promise, resolve with the list
       };
 
       machine.getNode = function (id) {
-        // Get a single node from the '{this.name}neighbors' collection or table
+        // Get a single node from the 'nodes' collection or table
         // Return a promise, resolve with the node
       }
 
       machine.setNode = function (obj) {
         // Create a Node instance with new Node(this, { features: obj })
-        // Add { id: node.id, features: obj } to '{this.name}neighbors' collection or table
+        // Add { id: node.id, features: obj } to 'nodes' collection or table
         // Emit 'node' event with this.emit('node', { id: node.id, features: node.features })
         // Return a promise, resolve with the Node instance
+      };
+
+      machine.updateNode = function (guess) {
+        // Update the node at guess.id with guess.feature = guess.value.
       };
 
       machine.getNeighbors = function (id, k) {
@@ -41,7 +44,7 @@ module.exports = (machine) => {
       };
 
       machine.getArc = function (pair) {
-        // Get a single arc from the '{this.name}_arcs' collection or table
+        // Get a single arc from the 'arcs' collection or table
         // Return a promise, resolve with the arc
       };
 
@@ -55,7 +58,6 @@ module.exports = (machine) => {
 
       machine.calculateRanges = function () {
         // For each node in the dataset, tally up the highest and lowest properties (if they are numbers) at this.features[<property>].max and this.features[<property>].min
-        // If they are not numbers, skip them.
         // For each feature on this.features, calculate the range by subtracting min from max, assign to this.features[prop].range
         // Emit 'ranges' event with this.features
         // Return a promise, resolve
@@ -72,14 +74,14 @@ module.exports = (machine) => {
         //    let features = []
         // For each feature on each neighbor node, calculate the distance.
         // If the feature is a number:
-        //    let delta = (neighbor.features[prop] - node.features[prop]) / this.features[prop].range)
+        //    let delta = (_node.features[prop] - node.features[prop]) / this.features[prop].range)
         //    let squares = Math.sqrt(delta * delta)
         //    features.push(squares)
         // If the feature is a String:
         //    let delta;
-        //    if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[prop], neighbor.features[prop]);
-        //    else if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[prop], neighbor.features[prop]);
-        //    else if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[prop], neighbor.features[prop]);
+        //    if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[prop], _node.features[prop]);
+        //    else if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[prop], _node.features[prop]);
+        //    else if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[prop], _node.features[prop]);
         //    let squares = Math.sqrt(delta * delta)
         //    features.push(squares)
         // After iterating the features, add them together with

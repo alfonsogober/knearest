@@ -13,8 +13,8 @@ module.exports = (machine) => {
 
       machine.db = db;
 
-      let nodes = machine.db.collection(`${this.name}Nodes`);
-      let arcs = machine.db.collection(`${this.name}Arcs`);
+      let nodes = machine.db.collection(`${machine.name}Nodes`);
+      let arcs = machine.db.collection(`${machine.name}Arcs`);
 
       machine.getNodes = function () {
         return new Bluebird((resolve, reject) => {
@@ -43,6 +43,16 @@ module.exports = (machine) => {
               this.emit('node', { id: node.id, features: node.features });
             }
           });
+        });
+      };
+
+      machine.updateNode = function (guess) {
+        let update = {"$set": {}}
+        guess.input[guess.feature] = guess.value;
+        update["$set"].features = guess.input;
+        nodes.update({ id: guess.id }, update, (err, res) => {
+          if (err) reject(err);
+          if (res && res.result.nModified === 1) this.log(`Updated node ${guess.id}`)
         });
       };
 
@@ -169,7 +179,7 @@ module.exports = (machine) => {
             });
           });
       };
-
+      machine.on('guess', machine.updateNode);
       success();
     });
   });

@@ -52,5 +52,4 @@ machine.on('node', console.log);
 machine.guess('type', {rooms: 12, area: 1375 })
   .then((result) => {
     console.log('Value of "' + result.feature + '" is probably ' + chalk.green(result.value) + ' ('+result.elapsed+'ms)');
-    process.exit(0);
   });

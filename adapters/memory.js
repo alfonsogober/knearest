@@ -1,7 +1,6 @@
 'use strict';
 
 const Bluebird = require('bluebird');
-const natural = require('natural');
 const _ = require('lodash');
 const Node = require('../node');
 
@@ -19,9 +18,13 @@ module.exports = (machine) => {
 
   machine.setNode = function (obj) {
     let node = new Node(this, { features: obj });
-    this.nodes.push(node);
     this.emit('node', { id: node.id, features: node.features });
     return Bluebird.resolve(node);
+  };
+
+  machine.updateNode = function (guess) {
+    let node = _.find(this.nodes, { id: guess.id });
+    node.features[guess.feature] = guess.value;
   };
 
   machine.getNeighbors = function (id, k) {
@@ -106,7 +109,6 @@ module.exports = (machine) => {
                     features.push(feature);
                   }
                   else if ((typeof node.features[prop] === 'string') && (typeof _node.features[prop] === 'string') && (this.features[prop].range !== 0)) {
-                    let delta;
                     if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[prop], _node.features[prop]);
                     else if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[prop], _node.features[prop]);
                     else if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[prop], _node.features[prop]);

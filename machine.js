@@ -69,10 +69,14 @@ class Machine extends EventEmitter {
     return new Bluebird((resolve, reject) => {
       let start = Date.now();
       let count = {};
+      let features;
+      let id;
       this.on('ready', () => {
         this.emit('guessing', { feature: prop, k: this.k });
         return this.setNode(obj)
           .then((node) => {
+            features = node.features;
+            id = node.id;
             return this.calculateRanges()
               .then(() => this.calculateArcs())
               .then(() => this.getNeighbors(node.id, this.k));
@@ -101,7 +105,7 @@ class Machine extends EventEmitter {
           .then((guess) => {
             let end = Date.now();
             let duration = end - start;
-            let result = { elapsed: duration, feature: prop, value: guess };
+            let result = { id: id, input: features, elapsed: duration, feature: prop, value: guess };
             this.emit('guess', result);
             resolve(result);
           });
