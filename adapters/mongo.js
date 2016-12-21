@@ -36,12 +36,16 @@ module.exports = (machine) => {
 
       machine.setNode = function (obj) {
         return new Bluebird((resolve, reject) => {
+          _.map(Object.keys(obj), (key) => {
+            if (!_.includes(this.props, key)) reject(`Invalid node feature: ${key}`);
+          });
           let node = new Node(this, { features: obj })
           nodes.insert({ id: node.id, features: obj }, (err, result) => {
             if (result.result.ok === 1) {
-              resolve(result.ops[0]);
               this.emit('node', { id: node.id, features: node.features });
+              resolve(result.ops[0]);
             }
+            else reject(err);
           });
         });
       };
@@ -96,9 +100,7 @@ module.exports = (machine) => {
                 else resolve(res);
               });
             }
-            else {
-              resolve(false);
-            }
+            else resolve(0);
           });
         });
       };
@@ -135,6 +137,7 @@ module.exports = (machine) => {
             return new Bluebird((resolve, reject) => {
               let count1 = 0;
               let promises = [];
+              let arcs = 0;
               if (this.verbose) this.log(`Calculating arcs on ${nodesCount} nodes...`);
               nodes.find().forEach((node) => {
                 let count2 = 0;
@@ -160,26 +163,29 @@ module.exports = (machine) => {
                       }
                     });
                     arc.distance = features.length > 1 ? features.reduce((x, y) => x + y) : features[0];
-                    promises.push(this.setArc(arc));
-                  }
-                  count2++;
-                  if (count2 === nodesCount) {
-                    count2 = 0;
-                    count1++;
-                    if (count1 === nodesCount) {
-                      Bluebird.filter(promises, (n) => n)
-                        .then((result) => {
-                          this.log(`Calculated ${result.length} arcs.`);
-                          resolve();
-                        })
-                    }
+                    this.setArc(arc)
+                      .then((res) => {
+                        this.log(`Calculated ${count2} of ${count1} of ${nodesCount} nodes (${arcs} arcs)`)
+                        if (res !== 0) arcs++;
+                        count2++;
+                        if (count2 === nodesCount) {
+                          count2 = 0;
+                          count1++;
+                          if (count1 === nodesCount) {
+                            this.log(`Calculated ${arcs} arcs.`);
+                            resolve();
+                          }
+                        }
+                      });
                   }
                 });
               });
             });
           });
       };
-      machine.on('guess', machine.updateNode);
+
+      if (machine.updateOnGuess) machine.on('guess', machine.updateNode);
+
       success();
     });
   });

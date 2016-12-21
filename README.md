@@ -140,6 +140,15 @@ Create an instance using `options` object.
 #### `Machine.guess([String prop], [Object data])`
 Guess the value of `prop` on `data`, based on the nodes supplied to the constructor. Depending on the size of the dataset, this may take some time.
 
+#### `Machine.setNode([Object obj])`
+Add a single training node. Use this to add training data outside of the `nodes` option in the constructor.
+
+#### `Machine.setNodes([String url]|[Array nodes])``
+Add multiple training nodes. Use this to add training data outside of the `nodes` option in the constructor.  
+Accepts either: 
+  * A String url for directly downloading from API endpoints. Note that all data will be validated against the schema in `options.props`.
+  * an Array of nodes to add to the db. Again, all data will be validated against `options.props` to enforce data integrity.
+
 ### Events
 
 `knearest` is an Event Emitter, so you can use the standard `.on(event, callback)` method to listen for emitted data.

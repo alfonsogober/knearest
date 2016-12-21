@@ -131,7 +131,9 @@ module.exports = (machine) => {
             });
         });
       });
-  }
+  };
+
+  if (machine.updateOnGuess) machine.on('guess', machine.updateNode);
 
   return Bluebird.resolve();
 }

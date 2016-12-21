@@ -7,6 +7,7 @@ const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
 const _ = require('lodash');
+const oboe = require('oboe');
 
 const adapters = {
   memory: require('./adapters/memory'),
@@ -16,37 +17,31 @@ const adapters = {
 class Machine extends EventEmitter {
 
   constructor(options) {
-    super();
     if (options && options.nodes && options.props) {
+      super();
       this.setProps(options.props);
-      this.name = options.name ? options.name : '';
+
+      this.adapters = adapters;
+      this.name = options.name ? options.name : 'knearest';
       this.k = options && options.k ? options.k : 1;
       this.verbose = options.verbose ? options.verbose : false;
       this.stringAlgorithm = options.stringAlgorithm ? options.stringAlgorithm : 'Jaro-Winkler';
-      if (options.name) this.name = options.name;
-      if (!options.data || (options.data.store === 'memory')) {
-        adapters['memory'](this)
-          .then(() => {
-            return Bluebird.map(options.nodes, (node) => this.setNode(node))
-          })
-          .then(() => this.emit('ready'));
-          return this;
-      }
-      else if (options.data && options.data.store === 'mongo' && options.data.url) {
-        this.data = options.data;
-        adapters['mongo'](this)
-          .then(() => {
-            return Bluebird.map(options.nodes, (node) => this.setNode(node));
-          })
-          .then(() => {
-            this.emit('ready')
+      this.updateOnGuess = options.updateOnGuess ? options.updateOnGuess : true;
+      this.data = (options.data && options.data.store) ? options.data : { store: 'memory' };
+
+      if (this.adapters[this.data.store]) {
+        this.adapters[this.data.store](this)
+          .then(() => { return this.setNodes(options.nodes) })
+          .then(() => { this.emit('ready') })
+          .catch((err) => {
+            throw new Error(err);
           });
-        return this;
+          return this;
       }
       else throw new Error(`Data source '${options.data.store}' not supported.`);
     }
     else throw new Error(`Improper arguments: ${JSON.stringify(options)}`);
-  }
+  };
 
   setProps(props) {
     if (this.verbose) console.log(`Setting Machine Properties: ${JSON.stringify(props)}`)
@@ -58,12 +53,31 @@ class Machine extends EventEmitter {
       });
     }
     else throw new Error('Props must be an array with minimum length of 1');
-  }
+  };
+
+  setNodes(arg) {
+    this.log("Setting nodes...")
+    return new Bluebird((resolve, reject) => {
+      if (typeof arg === 'string') {
+        oboe(arg)
+          .node("!.*", (item) => {
+            this.setNode(item)
+              .catch(reject);
+            return oboe.drop;
+          })
+          .done(resolve);
+      }
+      else if (arg && arg[0]) {
+        resolve(Bluebird.mapSeries(arg, (node) => this.setNode(node)));
+      }
+      else resolve(this.setNode(arg));
+    });
+  };
 
   log(msg) {
     if (this.verbose) console.log(msg)
     this.emit('data', msg);
-  }
+  };
 
   guess(prop, obj) {
     return new Bluebird((resolve, reject) => {
@@ -73,7 +87,7 @@ class Machine extends EventEmitter {
       let id;
       this.on('ready', () => {
         this.emit('guessing', { feature: prop, k: this.k });
-        return this.setNode(obj)
+        this.setNodes(obj)
           .then((node) => {
             features = node.features;
             id = node.id;
@@ -108,7 +122,8 @@ class Machine extends EventEmitter {
             let result = { id: id, input: features, elapsed: duration, feature: prop, value: guess };
             this.emit('guess', result);
             resolve(result);
-          });
+          })
+          .catch(reject);
       });
     });
   }
