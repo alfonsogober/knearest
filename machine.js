@@ -45,11 +45,11 @@ class Machine extends EventEmitter {
 
   setProps(props) {
     if (this.verbose) console.log(`Setting Machine Properties: ${JSON.stringify(props)}`)
-    if (typeof props[0] !== 'undefined') {
-      this.props = props;
+    if (props.length) {
       this.features = {};
-      this.props.forEach((prop) => {
-        this.features[prop] = { min: Infinity, max: 0 };
+      props.forEach((prop) => {
+        if (prop.name && prop.type) this.features[prop.name] = { min: Infinity, max: 0, type: typeof prop.type() };
+        else throw new Error('Invalid properties');
       });
     }
     else throw new Error('Props must be an array with minimum length of 1');

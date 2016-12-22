@@ -7,8 +7,21 @@ const chalk = require('chalk');
 // Some data to get us going. It's important that your data is well-clustered,
 // because statistical noise will render this algorithm less useful.
 let machine= new Machine({
-  k: 3,
-  props: ['rooms', 'area', 'type'],
+  k: 5,
+  props: [
+    {
+      name: 'rooms',
+      type: Number
+    },
+    {
+      name: 'area',
+      type: Number
+    },
+    {
+      name: 'type',
+      type: String
+    }
+  ],
   nodes: [
     { rooms: 1, area: 350, type: 'apartment' },
     { rooms: 2, area: 300, type: 'apartment' },

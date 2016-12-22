@@ -36,9 +36,6 @@ module.exports = (machine) => {
 
       machine.setNode = function (obj) {
         return new Bluebird((resolve, reject) => {
-          _.map(Object.keys(obj), (key) => {
-            if (!_.includes(this.props, key)) reject(`Invalid node feature: ${key}`);
-          });
           let node = new Node(this, { features: obj })
           nodes.insert({ id: node.id, features: obj }, (err, result) => {
             if (result.result.ok === 1) {
@@ -64,13 +61,13 @@ module.exports = (machine) => {
         return new Bluebird((resolve, reject) => {
           if (this.verbose) this.log(`Getting ${k} nearest neighbors of node ${id}`)
           let limit = k ? k : this.k;
-          let promises = [];
-          arcs.find({ pair: id }).limit(limit).sort({"distance": 1}).each((err, arc) => {
+          let ids = [];
+          arcs.find({ pair: id }).sort({"distance": 1}).each((err, arc) => {
             if (err) reject(err);
-            else if (arc === null) resolve(Bluebird.all(promises))
+            else if (ids.length === limit) resolve(Bluebird.map(ids, (nodeid) => this.getNode(nodeid)));
             else {
               let newId = _.pull(arc.pair, id)[0];
-              promises.push(this.getNode(newId));
+              if (!_.includes(ids, newId)) ids.push(newId);
             }
           });
         });
@@ -112,17 +109,14 @@ module.exports = (machine) => {
             .then((nodesCount) => {
               this.log(`Calculating ranges on ${nodesCount} nodes...`);
               nodes.find().forEach((node) => {
-                _.forEach(this.props, (prop) => {
-                  if (typeof node.features[prop] === 'number') {
-                    if (node.features[prop] < this.features[prop].min) this.features[prop].min = node.features[prop];
-                    if (node.features[prop] > this.features[prop].max) this.features[prop].max = node.features[prop];
+                _.forEach(this.features, (prop, name) => {
+                  if (this.features[name].type === 'number') {
+                    if (node.features[name] < this.features[name].min) this.features[name].min = node.features[name];
+                    if (node.features[name] > this.features[name].max) this.features[name].max = node.features[name];
                   }
                 });
                 count++;
                 if (count === nodesCount) {
-                  _.forEach(this.props, (prop) => {
-                    if (typeof node.features[prop] === 'number') this.features[prop].range = this.features[prop].max - this.features[prop].min;
-                  });
                   this.emit('ranges', this.features);
                   resolve();
                 }
@@ -147,17 +141,20 @@ module.exports = (machine) => {
                     let arc = {
                       pair: [node.id, _node.id]
                     };
-                    _.forEach(this.props, (prop) => {
-                      let delta;
-                      if ((typeof node.features[prop] === 'number') && (typeof _node.features[prop] === 'number') && (this.features[prop].range !== 0)) {
-                        delta = (_node.features[prop] - node.features[prop]) / this.features[prop].range;
+                    _.forEach(this.features, (prop, name) => {
+                      let delta = 0;
+                      if (node.features[name] && _node.features[name] && (typeof node.features[name] === 'number') && (typeof _node.features[name] === 'number') && (this.features[name].range !== 0)) {
+                        let difference = 0;
+                        if (_node.features[name] > node.features[name]) difference = _node.features[name] - node.features[name]
+                        else if (node.features[name] > _node.features[name]) difference = node.features[name] - _node.features[name]
+                        delta = difference / (prop.max - prop.min);
                         let feature = Math.sqrt(delta * delta);
                         features.push(feature);
                       }
-                      else if ((typeof node.features[prop] === 'string') && (typeof _node.features[prop] === 'string') && (this.features[prop].range !== 0)) {
-                        if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[prop], _node.features[prop]);
-                        else if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[prop], _node.features[prop]);
-                        else if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[prop], _node.features[prop]);
+                      else if (node.features[name] && _node.features[name] && (typeof node.features[name] === 'string') && (typeof _node.features[name] === 'string') && (this.features[name].range !== 0)) {
+                        if (this.stringAlgorithm === 'Jaro-Winkler') delta = natural.JaroWinklerDistance(node.features[name], _node.features[name]);
+                        if (this.stringAlgorithm === 'Levenshtein') delta = natural.LevenshteinDistance(node.features[name], _node.features[name]);
+                        if (this.stringAlgorithm === 'Dice') delta = natural.DiceCoefficient(node.features[name], _node.features[name]);
                         let feature = Math.sqrt(delta * delta);
                         features.push(feature);
                       }
@@ -165,13 +162,12 @@ module.exports = (machine) => {
                     arc.distance = features.length > 1 ? features.reduce((x, y) => x + y) : features[0];
                     this.setArc(arc)
                       .then((res) => {
-                        this.log(`Calculated ${count2} of ${count1} of ${nodesCount} nodes (${arcs} arcs)`)
                         if (res !== 0) arcs++;
                         count2++;
-                        if (count2 === nodesCount) {
+                        if (count2 === (nodesCount - 1)) {
                           count2 = 0;
                           count1++;
-                          if (count1 === nodesCount) {
+                          if (count1 === (nodesCount - 1)) {
                             this.log(`Calculated ${arcs} arcs.`);
                             resolve();
                           }

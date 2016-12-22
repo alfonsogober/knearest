@@ -8,7 +8,20 @@ const chalk = require('chalk');
 // because statistical noise will render this algorithm less useful.
 let machine= new Machine({
   k: 5,                                               // Optional. Defaults to 1.
-  props: ['rooms', 'area', 'type'],                   // Required. This is the schema of your dataset. All nodes will be checked against this.
+  props: [
+    {
+      name: 'rooms',
+      type: Number
+    },
+    {
+      name: 'area',
+      type: Number
+    },
+    {
+      name: 'type',
+      type: String
+    }
+  ],                   // Required. This is the schema of your dataset. All nodes will be checked against this.
   nodes: [                                            // Required. There must be some data to seed the AI's knowledge
     { rooms: 1, area: 350, type: 'apartment' },
     { rooms: 2, area: 300, type: 'apartment' },

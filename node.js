@@ -16,8 +16,8 @@ class Node extends EventEmitter {
       this.id = !obj.id ? (uuid()).replace(/-/g, '') : obj.id;
       this.features = {};
       Object.keys(obj.features).forEach((prop) => {
-        if (_.includes(machine.props, prop)) this.features[prop] = obj.features[prop];
-        else throw new Error('Invalid machine properties for selected node');
+        if (typeof obj.features[prop] === machine.features[prop].type) this.features[prop] = obj.features[prop];
+        else throw new Error(`Incorrect feature type on node ${this.id}: Expected feature '${prop}' to be a ${machine.features[prop].type}, got ${typeof obj.features[prop]}`);
       });
     }
     else throw new Error('Machine must be an instance of Machine class and object must be an Object type');
