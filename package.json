@@ -1,6 +1,6 @@
 {
   "name": "knearest",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "A Javascript implementation of the \"k-Nearest-Neighbor\" machine-learning algorithm",
   "main": "knearest.js",
   "dependencies": {

@@ -20,17 +20,27 @@ In this example, consider the following:
 
 ```Javascript
 
-'use strict';
-
 const Machine = require('../knearest');
 const chalk = require('chalk');
 
 // Some data to get us going. It's important that your data is well-clustered,
 // because statistical noise will render this algorithm less useful.
 let machine= new Machine({
-  name: 'example',                                    // Optional. Defaults to ''
   k: 5,                                               // Optional. Defaults to 1.
-  props: ['rooms', 'area', 'type'],                   // Required. This is the schema of your dataset. All nodes will be checked against this.
+  props: [
+    {
+      name: 'rooms',
+      type: Number
+    },
+    {
+      name: 'area',
+      type: Number
+    },
+    {
+      name: 'type',
+      type: String
+    }
+  ],                   // Required. This is the schema of your dataset. All nodes will be checked against this.
   nodes: [                                            // Required. There must be some data to seed the AI's knowledge
     { rooms: 1, area: 350, type: 'apartment' },
     { rooms: 2, area: 300, type: 'apartment' },
@@ -72,10 +82,10 @@ machine.on('node', console.log);
 // We want to guess the value of "type".
 // .guess(property, node) returns a bluebird Promise.
 machine.guess('type', {rooms: 12, area: 1375 })
-  .then((result) = {
+  .then((result) => {
     console.log('Value of "' + result.feature + '" is probably ' + chalk.green(result.value) + ' ('+result.elapsed+'ms)');
-    process.exit(0);
   });
+
 
 ```
 
@@ -145,7 +155,7 @@ Add a single training node. Use this to add training data outside of the `nodes`
 
 #### `Machine.setNodes([String url]|[Array nodes])``
 Add multiple training nodes. Use this to add training data outside of the `nodes` option in the constructor.  
-Accepts either: 
+Accepts either:
   * A String url for directly downloading from API endpoints. Note that all data will be validated against the schema in `options.props`.
   * an Array of nodes to add to the db. Again, all data will be validated against `options.props` to enforce data integrity.
 
