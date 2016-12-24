@@ -2,7 +2,6 @@
 /*jslint node: true */
 /*jslint esversion: 6 */
 
-
 const Bluebird = require('bluebird');
 const uuid = require('uuid/v4');
 const EventEmitter = require('events');
@@ -28,6 +27,7 @@ class Machine extends EventEmitter {
       this.stringAlgorithm = options.stringAlgorithm ? options.stringAlgorithm : 'Jaro-Winkler';
       this.updateOnGuess = options.updateOnGuess ? options.updateOnGuess : true;
       this.data = (options.data && options.data.store) ? options.data : { store: 'memory' };
+      this.transform = (typeof options.transform === 'function') ? options.transform : Bluebird.resolve;
 
       if (this.adapters[this.data.store]) {
         this.adapters[this.data.store](this)
@@ -55,13 +55,15 @@ class Machine extends EventEmitter {
     else throw new Error('Props must be an array with minimum length of 1');
   };
 
-  setNodes(arg) {
-    this.log("Setting nodes...")
+  setNodes(arg, str) {
+    this.log("Setting nodes...");
+    let pattern = str ? str : "!.*";
     return new Bluebird((resolve, reject) => {
       if (typeof arg === 'string') {
         oboe(arg)
-          .node("!.*", (item) => {
-            this.setNode(item)
+          .node(pattern, (item) => {
+            this.transform(item)
+              .then(this.setNode)
               .catch(reject);
             return oboe.drop;
           })
